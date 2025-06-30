@@ -82,7 +82,7 @@ def upload():
 
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
-    return send_from_directory('uploads', filename)
+    return send_from_directory('app/uploads', filename)
 
 # --- 5. Broken Auth (no session checking) ---
 
