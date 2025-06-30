@@ -114,7 +114,9 @@ def login():
 @app.route("/admin")
 def admin():
     user = request.cookies.get("auth", "guest")
-    return f"<h1>Welcome, {user}</h1><p>This is the admin panel (no validation, trust based only on cookie).</p>"
+    if user != "admin":
+        return "<h1>Access Denied</h1><p>You are not authorized to view this page.</p>", 403
+    return f"<h1>Welcome, {user}</h1><p>This is the admin panel.</p>"
 
 if __name__ == "__main__":
     os.makedirs("uploads", exist_ok=True)
