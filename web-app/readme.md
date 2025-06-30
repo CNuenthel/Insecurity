@@ -25,4 +25,4 @@ cd Insecurity/web-app
 docker compose up --build
 ```
 
-The insecure webapp will be running at http://localhost:5000
+The insecure webapp will be running at http://localhost:5050

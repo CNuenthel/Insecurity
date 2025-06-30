@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN mkdir /app/uploads
 
 # Expose the Flask port
-EXPOSE 5000
+EXPOSE 5050
 
 # Run the app
 CMD ["python", "insecure_app.py"]
