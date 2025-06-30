@@ -17,8 +17,12 @@ Currently included flaws:
 
 ### Run the App
 
+This app runs on port 5000, make sure you do not have other services running on this port. 
+
 ```bash
 git clone https://github.com/CNuenthel/Insecurity.git
 cd Insecurity/web-app
 docker-compose up --build
 ```
+
+The insecure webapp will be running at http://localhost:5000
