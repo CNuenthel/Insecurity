@@ -71,6 +71,7 @@ def csrf():
 def upload():
     if request.method == "POST":
         file = request.files["file"]
+        print(file.filename)
         path = os.path.join("uploads", file.filename)
         file.save(path)
         return redirect("/upload")
