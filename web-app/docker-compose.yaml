@@ -1,0 +1,10 @@
+---
+services:
+  insecure-webapp:
+    build: .
+    container_name: insecure-webapp
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./uploads:/app/uploads
+    restart: unless-stopped
