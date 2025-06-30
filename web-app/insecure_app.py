@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template_string, redirect, make_response
+from flask import Flask, request, render_template_string, redirect, make_response, send_from_directory
 import sqlite3
 import os
 
@@ -79,6 +79,10 @@ def upload():
             <input type="submit">
         </form>
     """
+
+@app.route('/uploads/<path:filename>')
+def uploaded_file(filename):
+    return send_from_directory('uploads', filename)
 
 # --- 5. Broken Auth (no session checking) ---
 
