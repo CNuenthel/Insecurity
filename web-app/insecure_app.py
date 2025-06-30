@@ -1,4 +1,5 @@
 from flask import Flask, request, render_template_string, redirect, make_response, send_from_directory
+import subprocess
 import sqlite3
 import os
 
@@ -89,9 +90,39 @@ def upload():
         <ul>{links}</ul>
     """
 
-@app.route('/uploads/<path:filename>')
-def uploaded_file(filename):
-    return send_from_directory('uploads', filename)
+@app.route("/run_uploaded", methods=["GET", "POST"])
+def run_uploaded():
+    files = [f for f in os.listdir("uploads") if f.endswith(".py")]
+
+    if request.method == "POST":
+        script = request.form["script"]
+        args = request.form["args"]
+        try:
+            result = subprocess.check_output(
+                ["python", os.path.join("uploads", script)] + args.split(),
+                stderr=subprocess.STDOUT,
+                timeout=5,
+                text=True
+            )
+        except Exception as e:
+            result = f"Error: {str(e)}"
+        return f"""
+            <h2>Executed {script}</h2>
+            <pre>{result}</pre>
+            <a href="/run_uploaded">Back</a>
+        """
+
+    file_list = "".join(f'<option value="{f}">{f}</option>' for f in files)
+    return f"""
+        <h2>Execute Uploaded Python File</h2>
+        <form method="post">
+            <label>Script:</label>
+            <select name="script">{file_list}</select><br>
+            <label>Args:</label>
+            <input name="args" placeholder="e.g. whoami ls"><br>
+            <input type="submit" value="Execute">
+        </form>
+    """
 
 # --- 5. Broken Auth (no session checking) ---
 
