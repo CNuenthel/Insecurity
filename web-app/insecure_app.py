@@ -72,17 +72,26 @@ def upload():
         file = request.files["file"]
         path = os.path.join("uploads", file.filename)
         file.save(path)
-        return f"File saved to {path}"
-    return """
+        return redirect("/upload")
+
+    # List files in upload directory
+    files = os.listdir("uploads")
+    links = "".join(
+        f'<li><a href="/uploads/{f}" target="_blank">{f}</a></li>' for f in files
+    )
+    return f"""
+        <h2>Upload a File</h2>
         <form method="post" enctype="multipart/form-data">
             <input type="file" name="file">
             <input type="submit">
         </form>
+        <h3>Uploaded Files</h3>
+        <ul>{links}</ul>
     """
 
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
-    return send_from_directory('app/uploads', filename)
+    return send_from_directory('uploads', filename)
 
 # --- 5. Broken Auth (no session checking) ---
 
