@@ -8,6 +8,9 @@ app = Flask(__name__)
 # Simulated DB for SQL Injection
 conn = sqlite3.connect("users.db", check_same_thread=False)
 conn.execute("CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT)")
+conn.execute("INSERT INTO users (username, password) VALUES ('admin', 'secret')")
+conn.execute("INSERT INTO users (username, password) VALUES ('guest', 'guest123')")
+conn.commit()
 
 @app.route("/")
 def home():
@@ -23,6 +26,18 @@ def home():
     """
 
 # --- 1. XSS ---
+@app.route("/set-cookie")
+def set_cookie():
+    resp = make_response("Cookie set!")
+    resp.set_cookie("sessionid", "super_secret_token")  # No HttpOnly!
+    return resp
+
+@app.route("/steal")
+def steal():
+    with open("stolen.txt", "a") as f:
+        f.write(request.args.get("cookie", "") + "\n")
+    return "Cookie received"
+
 @app.route("/xss", methods=["GET", "POST"])
 def xss():
     if request.method == "POST":
@@ -41,7 +56,10 @@ def sqli():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        cursor = conn.execute(f"SELECT * FROM users WHERE username='{username}' AND password='{password}'")
+        query = f"SELECT * FROM users WHERE username='{username}' AND password='{password}'"
+        for row in conn.execute("SELECT * FROM users"):
+            print(row)
+        cursor = conn.execute(query)
         if cursor.fetchone():
             return "✅ Logged in!"
         return "❌ Login failed!"
@@ -66,72 +84,14 @@ def csrf():
         </form>
     """
 
-# --- 4. Insecure File Upload ---
-@app.route("/upload", methods=["GET", "POST"])
-def upload():
-    if request.method == "POST":
-        file = request.files["file"]
-        print(file.filename)
-        path = os.path.join("uploads", file.filename)
-        file.save(path)
-        return redirect("/upload")
-
-    # List files in upload directory
-    files = os.listdir("uploads")
-    links = "".join(
-        f'<li><a href="/uploads/{f}" target="_blank">{f}</a></li>' for f in files
-    )
-    return f"""
-        <h2>Upload a File</h2>
-        <form method="post" enctype="multipart/form-data">
-            <input type="file" name="file">
-            <input type="submit">
-        </form>
-        <h3>Uploaded Files</h3>
-        <ul>{links}</ul>
-    """
-
-@app.route("/run_uploaded", methods=["GET", "POST"])
-def run_uploaded():
-    files = [f for f in os.listdir("uploads") if f.endswith(".py")]
-
-    if request.method == "POST":
-        script = request.form["script"]
-        args = request.form["args"]
-        try:
-            result = subprocess.check_output(
-                ["python", os.path.join("uploads", script)] + args.split(),
-                stderr=subprocess.STDOUT,
-                timeout=5,
-                text=True
-            )
-        except Exception as e:
-            result = f"Error: {str(e)}"
-        return f"""
-            <h2>Executed {script}</h2>
-            <pre>{result}</pre>
-            <a href="/run_uploaded">Back</a>
-        """
-
-    file_list = "".join(f'<option value="{f}">{f}</option>' for f in files)
-    return f"""
-        <h2>Execute Uploaded Python File</h2>
-        <form method="post">
-            <label>Script:</label>
-            <select name="script">{file_list}</select><br>
-            <label>Args:</label>
-            <input name="args" placeholder="e.g. whoami ls"><br>
-            <input type="submit" value="Execute">
-        </form>
-    """
 
 # --- 5. Broken Auth (no session checking) ---
 
 # Fake user database (insecure, for demo only)
 users = {
-    "admin": "admin",
+    "admin": "secret",
     "user": "user",
-    "guest": "guest"
+    "guest": "guest123"
 }
 
 @app.route("/login", methods=["GET", "POST"])
